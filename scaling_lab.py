@@ -235,7 +235,7 @@ def rl_post_train(
     """Optimize exact expected reward by enumerating the eight possible actions."""
     model = copy.deepcopy(pretrained_model)
     # Use the same uniform policy initialization at every width. The pretrained
-    # transformer body is retained; only the four constrained action rows are
+    # transformer body is retained; only the eight constrained action rows are
     # reset so an unrelated language-model prior cannot dominate this sweep.
     with torch.no_grad():
         model.language_head.weight[RL_ACTION_IDS].zero_()

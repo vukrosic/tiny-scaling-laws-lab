@@ -76,6 +76,18 @@ return:
 J(theta) = mean over prompts of sum_a pi_theta(a | prompt) * reward(prompt, a)
 ```
 
+### What rule does RL learn?
+
+The rule is: **output the first character after `Copy:`**. The reward function,
+not the model, knows that `f` is correct for `Copy:facbed=` because `f` is the
+first character after the colon. The model is not given this rule in words.
+
+Its action probabilities begin uniformly at about `1/8` each. For this prompt,
+the expected reward is exactly `P(f | Copy:facbed=)`, so gradient updates
+increase the probability of `f`. Across many prompts with different first
+characters, the model learns the general copying policy. Evaluation then tests
+that policy on 256 prompts excluded from RL training.
+
 This is exact policy optimization for a small contextual bandit. It is genuine
 reward-based post-training, but it is not RLHF, PPO, or GRPO. The plotted RL
 metric is the reward gap, `1 - mean reward`; lower is better.
