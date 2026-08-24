@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+my_scaling_laws.png
+my_scaling_laws.json
+results/
+.DS_Store

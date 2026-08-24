@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python setup_dependencies.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+      - name: Check the public command
+        run: python scaling_lab.py --widths 4,6,8 --seeds 1 --pretrain-steps 2 --rl-steps 2 --batch-size 4 --image smoke.png --receipt smoke.json --no-open
