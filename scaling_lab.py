@@ -329,13 +329,23 @@ def _plot_panel(
     *,
     title: str,
     subtitle: str,
+    slope: float,
+    y_label: str,
     color: str,
     value_format: str,
 ) -> None:
     left, top, right, bottom = box
-    plot_left, plot_top, plot_right, plot_bottom = left + 105, top + 95, right - 35, bottom - 90
+    plot_left, plot_top, plot_right, plot_bottom = left + 105, top + 125, right - 35, bottom - 90
     _text(draw, (left + 8, top + 8), title, size=30, fill="#111827", bold=True)
     _text(draw, (left + 8, top + 49), subtitle, size=18, fill="#64748b")
+    _text(
+        draw,
+        (left + 8, top + 76),
+        f"descriptive log-log slope: {slope:+.2f}",
+        size=16,
+        fill="#64748b",
+    )
+    _text(draw, (plot_left, plot_top - 12), y_label, size=17, fill="#334155", bold=True, anchor="ls")
     draw.line((plot_left, plot_top, plot_left, plot_bottom), fill="#94a3b8", width=2)
     draw.line((plot_left, plot_bottom, plot_right, plot_bottom), fill="#94a3b8", width=2)
 
@@ -361,20 +371,23 @@ def _plot_panel(
         _text(draw, (plot_left - 14, y), f"{tick:.2f}", size=17, fill="#475569", anchor="ra")
 
     points = [(x_pixel(parameter), y_pixel(value)) for parameter, value in zip(parameters, values)]
-    draw.line(points, fill=color, width=5, joint="curve")
-    for (x, y), parameter, value, standard_deviation in zip(
-        points, parameters, values, standard_deviations
-    ):
+    for (x, _), value, standard_deviation in zip(points, values, standard_deviations):
         error_top = y_pixel(min(upper, value + standard_deviation))
         error_bottom = y_pixel(max(lower, value - standard_deviation))
-        draw.line((x, error_top, x, error_bottom), fill=color, width=3)
-        draw.line((x - 7, error_top, x + 7, error_top), fill=color, width=3)
-        draw.line((x - 7, error_bottom, x + 7, error_bottom), fill=color, width=3)
+        # White halo plus wide caps keeps uncertainty visible over grid and curve.
+        draw.line((x, error_top, x, error_bottom), fill="#ffffff", width=11)
+        draw.line((x - 16, error_top, x + 16, error_top), fill="#ffffff", width=11)
+        draw.line((x - 16, error_bottom, x + 16, error_bottom), fill="#ffffff", width=11)
+        draw.line((x, error_top, x, error_bottom), fill=color, width=6)
+        draw.line((x - 14, error_top, x + 14, error_top), fill=color, width=6)
+        draw.line((x - 14, error_bottom, x + 14, error_bottom), fill=color, width=6)
+
+    draw.line(points, fill=color, width=5, joint="curve")
+    for (x, y), parameter, value in zip(points, parameters, values):
         draw.ellipse((x - 8, y - 8, x + 8, y + 8), fill="#ffffff", outline=color, width=5)
         _text(draw, (x, y - 20), value_format.format(value), size=17, fill="#0f172a", bold=True, anchor="ms")
         _text(draw, (x, plot_bottom + 15), f"{parameter:,}", size=16, fill="#475569", anchor="ma")
-    _text(draw, ((plot_left + plot_right) / 2, bottom - 38), "model parameters (log-spaced axis)", size=18, fill="#334155", anchor="mm")
-    _text(draw, (left + 25, (plot_top + plot_bottom) / 2), "lower is better", size=17, fill="#64748b", anchor="lm")
+    _text(draw, ((plot_left + plot_right) / 2, bottom - 38), "model parameters (log scale)", size=18, fill="#334155", anchor="mm")
 
 
 def save_chart(results: list[SummaryResult], image_path: Path, pretrain_slope: float, rl_slope: float, seed_count: int) -> None:
@@ -384,7 +397,7 @@ def save_chart(results: list[SummaryResult], image_path: Path, pretrain_slope: f
     _text(
         draw,
         (70, 120),
-        "One character transformer architecture. Only width changes; budgets and evaluation stay fixed.",
+        "One character-level Transformer architecture. Only width changes; budgets and evaluation stay fixed.",
         size=23,
         fill="#475569",
     )
@@ -400,7 +413,9 @@ def save_chart(results: list[SummaryResult], image_path: Path, pretrain_slope: f
         pretraining,
         pretraining_std,
         title="1. Pretraining capacity sweep",
-        subtitle=f"mean held-out cross-entropy over {seed_count} seeds | slope {pretrain_slope:+.2f}",
+        subtitle=f"mean ± 1 SD over {seed_count} seeds",
+        slope=pretrain_slope,
+        y_label="validation cross-entropy (nats/character) ↓",
         color="#2563eb",
         value_format="{:.3f}",
     )
@@ -411,7 +426,9 @@ def save_chart(results: list[SummaryResult], image_path: Path, pretrain_slope: f
         rl_errors,
         rl_error_std,
         title="2. RL post-training capacity sweep",
-        subtitle=f"mean held-out reward gap over {seed_count} seeds | slope {rl_slope:+.2f}",
+        subtitle=f"mean ± 1 SD over {seed_count} seeds",
+        slope=rl_slope,
+        y_label="reward gap (1 - mean reward) ↓",
         color="#dc2626",
         value_format="{:.0%}",
     )
@@ -419,7 +436,7 @@ def save_chart(results: list[SummaryResult], image_path: Path, pretrain_slope: f
     _text(
         draw,
         (800, 862),
-        "Error bars show one standard deviation — evidence for this setup, not a universal scaling law.",
+        "Vertical bars = ±1 SD across seeds. Evidence for this setup, not a universal scaling law.",
         size=23,
         fill="#334155",
         bold=True,
