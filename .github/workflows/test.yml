@@ -21,5 +21,12 @@ jobs:
         run: python setup_dependencies.py
       - name: Run tests
         run: python -m unittest discover -s tests -v
-      - name: Check the public command
-        run: python scaling_lab.py --widths 4,6,8 --seeds 1 --pretrain-steps 2 --rl-steps 2 --batch-size 4 --image smoke.png --receipt smoke.json --no-open
+      - name: Prepare wrapper environment
+        run: python -m venv --system-site-packages .venv
+      - name: Check the public command on macOS and Linux
+        if: runner.os != 'Windows'
+        run: ./first_win.sh --widths 4,6,8 --seeds 1 --pretrain-steps 2 --rl-steps 2 --batch-size 4 --image smoke.png --receipt smoke.json --no-open
+      - name: Check the public command on Windows
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: first_win.bat --widths 4,6,8 --seeds 1 --pretrain-steps 2 --rl-steps 2 --batch-size 4 --image smoke.png --receipt smoke.json --no-open
