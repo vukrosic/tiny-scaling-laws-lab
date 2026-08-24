@@ -118,9 +118,15 @@ the RL budget. It tests a possible optimization-budget explanation.
 
 ## What is and is not a scaling law here
 
-The width sweep freezes the architecture family, data, split, context length,
-training steps, optimizer settings, evaluator, and random seeds. The graph also
-shows one-standard-deviation error bars and a descriptive log-log slope.
+Only Transformer residual width changes in the capacity sweep. Every width uses
+the same one-block, one-head architecture family, training and validation data,
+context length, sampled batches within each seed, 30 pretraining updates, 50 RL
+updates, batch size 32, learning rates, evaluator, and random seeds.
+
+This is **update-matched, not compute-matched**. A wider model performs more
+operations per update and may take longer, so total computation is not fixed.
+The graph shows one-standard-deviation error bars and a descriptive log-log
+slope.
 
 This is a **mini empirical capacity sweep**, not a universal neural scaling law.
 Four small model sizes and three seeds cannot establish an asymptotic power law.
